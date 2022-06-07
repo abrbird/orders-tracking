@@ -53,29 +53,29 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 		}
 
 		ctx := context.Background()
-		lastOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
+		issuedOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
 			ctx,
 			i.repository.OrderHistory(),
 			issueOrderMessage.Order.Id,
-			models.ReadyForIssue,
+			models.Issued,
 		)
 
-		if lastOrderHistoryRecordRetrieved.Error != nil {
+		if issuedOrderHistoryRecordRetrieved.Error != nil {
 			log.Printf("error on message processing: %v", err)
 			i.RetryConfirmIssueOrder(issueOrderMessage)
 			continue
 		}
 
-		if lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.Confirmed {
+		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.Confirmed {
 			log.Printf("order is already issued: %v", err)
 			continue
 		}
 
 		confirmIssueRecord := models.OrderHistoryRecord{
-			Id:           lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Id,
-			OrderId:      lastOrderHistoryRecordRetrieved.OrderHistoryRecord.OrderId,
-			Status:       lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Status,
-			Confirmation: models.InProgress,
+			Id:           issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Id,
+			OrderId:      issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.OrderId,
+			Status:       issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Status,
+			Confirmation: models.Confirmed,
 		}
 
 		err = i.service.OrderHistory().Update(
