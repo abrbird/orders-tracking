@@ -12,7 +12,7 @@ func (o OrderHistoryService) Update(ctx context.Context, repository rpstr.OrderH
 	return repository.CreateOrUpdate(ctx, record)
 }
 
-func (o OrderHistoryService) CreateOrUpdate(ctx context.Context, repository rpstr.OrderHistoryRepository, record *models.OrderHistoryRecord) error {
+func (o OrderHistoryService) Create(ctx context.Context, repository rpstr.OrderHistoryRepository, record *models.OrderHistoryRecord) error {
 	return repository.CreateOrUpdate(ctx, record)
 }
 

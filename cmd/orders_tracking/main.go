@@ -54,6 +54,9 @@ func main() {
 	defer cancel()
 
 	worker, err := wrkr.New(cfg, repository, service)
+	if err != nil {
+		log.Fatal(err)
+	}
 	err = worker.StartConsuming(ctx)
 	if err != nil {
 		log.Fatal(err)

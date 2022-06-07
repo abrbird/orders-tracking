@@ -17,7 +17,7 @@ kafka:
     - host: "localhost"
       port: 9095
     - host: "localhost"
-      port: 9097
+      port: 9096
     - host: "localhost"
       port: 9097
 

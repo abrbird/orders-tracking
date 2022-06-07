@@ -25,7 +25,7 @@ services:
   orders_tracking:
     container_name: orders_tracking
     build: ./
-    command: /bin/sh -c "/usr/local/bin/orders"
+    command: /bin/sh -c "/usr/local/bin/orders_tracking"
     depends_on:
       - orders_tracking_db
       - orders_tracking_db_migrations
