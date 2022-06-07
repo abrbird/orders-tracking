@@ -1,0 +1,31 @@
+version: "3.3"
+
+services:
+  orders_tracking_db:
+    container_name: orders_tracking_db
+    image: postgres:13.3
+    restart: always
+    user: root
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=orders_tracking
+    volumes:
+      - ./postgres-data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+
+  orders_tracking_db_migrations:
+    container_name: orders_tracking_db_migrations
+    build: ./
+    command: /bin/sh -c "/usr/local/bin/goose postgres up -dir ./migrations"
+    depends_on:
+      - orders_tracking_db
+
+  orders_tracking:
+    container_name: orders_tracking
+    build: ./
+    command: /bin/sh -c "/usr/local/bin/orders"
+    depends_on:
+      - orders_tracking_db
+      - orders_tracking_db_migrations
