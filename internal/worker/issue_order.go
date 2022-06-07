@@ -60,6 +60,12 @@ func (i *IssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 			issueOrderMessage.Order.Id,
 			models.Issued,
 		)
+		if issuedOrderHistoryRecordRetrieved.Error != nil {
+			log.Printf("order is not found: %v", err)
+			i.RetryIssueOrder(issueOrderMessage)
+			continue
+		}
+
 		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
 			log.Printf("order is on issuing: %v", err)
 			i.RetryIssueOrder(issueOrderMessage)
