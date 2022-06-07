@@ -2,7 +2,6 @@
 pgadmin
 postgres-data
 
-config/config.yml
 ./goose
 ./orders_tracking
 ./producer
