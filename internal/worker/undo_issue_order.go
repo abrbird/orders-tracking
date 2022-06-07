@@ -54,38 +54,37 @@ func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession
 		}
 
 		ctx := context.Background()
-		lastOrderHistoryRecordRetrieved := u.service.OrderHistory().RetrieveByStatus(
+		issuedOrderHistoryRecordRetrieved := u.service.OrderHistory().RetrieveByStatus(
 			ctx,
 			u.repository.OrderHistory(),
 			issueOrderMessage.Order.Id,
-			models.ReadyForIssue,
+			models.Issued,
 		)
 
-		if lastOrderHistoryRecordRetrieved.Error != nil {
+		if issuedOrderHistoryRecordRetrieved.Error != nil {
 			log.Printf("error on message processing: %v", err)
 			u.RetryUndoIssueOrder(issueOrderMessage)
 			continue
 		}
 
-		if lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
-			lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation = models.Declined
+		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
+			issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation = models.Declined
 
 			err = u.service.OrderHistory().Update(
 				ctx,
 				u.repository.OrderHistory(),
-				lastOrderHistoryRecordRetrieved.OrderHistoryRecord,
+				issuedOrderHistoryRecordRetrieved.OrderHistoryRecord,
 			)
 			if err != nil {
 				log.Printf("order can not be issued: %v", err)
 				u.RetryUndoIssueOrder(issueOrderMessage)
 				continue
 			}
-
-			log.Printf("consumer %s: <- %s: done",
-				u.config.Application.Name,
-				u.config.Kafka.IssueOrderTopics.UndoIssueOrder,
-			)
 		}
+		log.Printf("consumer %s: <- %s: done",
+			u.config.Application.Name,
+			u.config.Kafka.IssueOrderTopics.UndoIssueOrder,
+		)
 	}
 	return nil
 }

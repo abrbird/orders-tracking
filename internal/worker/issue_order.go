@@ -53,46 +53,46 @@ func (i *IssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 		}
 
 		ctx := context.Background()
-		lastOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveLast(
+
+		issuedOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
 			ctx,
 			i.repository.OrderHistory(),
 			issueOrderMessage.Order.Id,
+			models.Issued,
 		)
-
-		if lastOrderHistoryRecordRetrieved.Error != nil {
-			log.Printf("error on message processing: %v", err)
+		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
+			log.Printf("order is on issuing: %v", err)
 			i.RetryIssueOrder(issueOrderMessage)
 			continue
 		}
-
-		if lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Status == models.Issued {
-			if lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
-				log.Printf("order is on issuing: %v", err)
-				i.RetryIssueOrder(issueOrderMessage)
-				continue
-			}
-			if lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.Confirmed {
-				log.Printf("order is already issued: %v", err)
-				continue
-			}
+		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.Confirmed {
+			log.Printf("order is already issued: %v", err)
+			continue
 		}
 
-		if lastOrderHistoryRecordRetrieved.OrderHistoryRecord.Status != models.ReadyForIssue {
+		readyOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
+			ctx,
+			i.repository.OrderHistory(),
+			issueOrderMessage.Order.Id,
+			models.ReadyForIssue,
+		)
+
+		if readyOrderHistoryRecordRetrieved.Error != nil {
 			log.Printf("order can not be issued: %v", err)
 			i.RetryIssueOrder(issueOrderMessage)
 			continue
 		}
 
-		readyForIssueRecord := models.OrderHistoryRecord{
-			OrderId:      lastOrderHistoryRecordRetrieved.OrderHistoryRecord.OrderId,
-			Status:       models.ReadyForIssue,
+		issuedOrderRecord := models.OrderHistoryRecord{
+			OrderId:      readyOrderHistoryRecordRetrieved.OrderHistoryRecord.OrderId,
+			Status:       models.Issued,
 			Confirmation: models.InProgress,
 		}
 
 		err = i.service.OrderHistory().Create(
 			ctx,
 			i.repository.OrderHistory(),
-			&readyForIssueRecord,
+			&issuedOrderRecord,
 		)
 		if err != nil {
 			log.Printf("order can not be issued: %v", err)

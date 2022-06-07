@@ -9,13 +9,11 @@ import (
 type OrderHistoryService struct{}
 
 func (o OrderHistoryService) Update(ctx context.Context, repository rpstr.OrderHistoryRepository, record *models.OrderHistoryRecord) error {
-	//TODO implement me
-	panic("implement me")
+	return repository.CreateOrUpdate(ctx, record)
 }
 
-func (o OrderHistoryService) Create(ctx context.Context, repository rpstr.OrderHistoryRepository, record *models.OrderHistoryRecord) error {
-	//TODO implement me
-	panic("implement me")
+func (o OrderHistoryService) CreateOrUpdate(ctx context.Context, repository rpstr.OrderHistoryRepository, record *models.OrderHistoryRecord) error {
+	return repository.CreateOrUpdate(ctx, record)
 }
 
 func (o OrderHistoryService) Retrieve(ctx context.Context, repository rpstr.OrderHistoryRepository, recordId int64) models.OrderHistoryRecordRetrieve {
@@ -24,13 +22,11 @@ func (o OrderHistoryService) Retrieve(ctx context.Context, repository rpstr.Orde
 }
 
 func (o OrderHistoryService) RetrieveByStatus(ctx context.Context, repository rpstr.OrderHistoryRepository, orderId int64, status string) models.OrderHistoryRecordRetrieve {
-	//TODO implement me
-	panic("implement me")
+	return repository.RetrieveByStatus(ctx, orderId, status)
 }
 
 func (o OrderHistoryService) RetrieveLast(ctx context.Context, repository rpstr.OrderHistoryRepository, orderId int64) models.OrderHistoryRecordRetrieve {
-	//TODO implement me
-	panic("implement me")
+	return repository.RetrieveLast(ctx, orderId)
 }
 
 func (o OrderHistoryService) RetrieveHistory(ctx context.Context, repository rpstr.OrderHistoryRepository, orderId int64) models.OrderHistoryRetrieve {

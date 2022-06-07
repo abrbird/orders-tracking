@@ -6,7 +6,7 @@ import (
 )
 
 type OrderHistoryRepository interface {
-	Create(ctx context.Context, record *models.OrderHistoryRecord) error
+	CreateOrUpdate(ctx context.Context, record *models.OrderHistoryRecord) error
 	Retrieve(ctx context.Context, recordId int64) models.OrderHistoryRecordRetrieve
 	RetrieveByStatus(ctx context.Context, orderId int64, status string) models.OrderHistoryRecordRetrieve
 	RetrieveLast(ctx context.Context, orderId int64) models.OrderHistoryRecordRetrieve
