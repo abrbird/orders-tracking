@@ -30,12 +30,6 @@ func (i *ConfirmIssueOrderHandler) Cleanup(sarama.ConsumerGroupSession) error {
 func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
 
-		log.Printf("consumer %s: -> %s: %v",
-			i.config.Application.Name,
-			i.config.Kafka.IssueOrderTopics.ConfirmIssueOrder,
-			msg.Value,
-		)
-
 		if msg.Topic != i.config.Kafka.IssueOrderTopics.ConfirmIssueOrder {
 			log.Printf(
 				"topic names does not match: expected - %s, got %s\n",
@@ -51,6 +45,12 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 			log.Print("Unmarshall failed: value=%v, err=%v", string(msg.Value), err)
 			continue
 		}
+
+		log.Printf("consumer %s: <- %s: %v",
+			i.config.Application.Name,
+			i.config.Kafka.IssueOrderTopics.ConfirmIssueOrder,
+			issueOrderMessage,
+		)
 
 		ctx := context.Background()
 		issuedOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
@@ -112,6 +112,6 @@ func (i *ConfirmIssueOrderHandler) RetryConfirmIssueOrder(message kafka.IssueOrd
 		return
 	}
 
-	log.Printf("consumer %s: %v -> %v", i.config.Application.Name, part, offs)
+	log.Printf("consumer %s: sent %v -> %v", i.config.Application.Name, part, offs)
 	return
 }

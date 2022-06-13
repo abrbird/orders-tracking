@@ -17,5 +17,5 @@ type Address struct {
 type IssueOrderMessage struct {
 	Base    Base
 	Order   Order
-	Address *Address
+	Address Address
 }

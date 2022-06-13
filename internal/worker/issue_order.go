@@ -30,12 +30,6 @@ func (i *IssueOrderHandler) Cleanup(sarama.ConsumerGroupSession) error {
 func (i *IssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
 
-		log.Printf("consumer %s: <- %s: %v",
-			i.config.Application.Name,
-			i.config.Kafka.IssueOrderTopics.IssueOrder,
-			msg.Value,
-		)
-
 		if msg.Topic != i.config.Kafka.IssueOrderTopics.IssueOrder {
 			log.Printf(
 				"topic names does not match: expected - %s, got %s\n",
@@ -52,6 +46,12 @@ func (i *IssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 			continue
 		}
 
+		log.Printf("consumer %s: <- %s: %v",
+			i.config.Application.Name,
+			i.config.Kafka.IssueOrderTopics.IssueOrder,
+			issueOrderMessage,
+		)
+
 		ctx := context.Background()
 
 		issuedOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
@@ -60,20 +60,24 @@ func (i *IssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 			issueOrderMessage.Order.Id,
 			models.Issued,
 		)
-		if issuedOrderHistoryRecordRetrieved.Error != nil {
-			log.Printf("order is not found: %v", err)
-			i.RetryIssueOrder(issueOrderMessage)
-			continue
-		}
+		if issuedOrderHistoryRecordRetrieved.Error == nil {
 
-		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
-			log.Printf("order is on issuing: %v", err)
-			i.RetryIssueOrder(issueOrderMessage)
-			continue
-		}
-		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.Confirmed {
-			log.Printf("order is already issued: %v", err)
-			continue
+			if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
+				log.Printf("order is on issuing: %v", err)
+				//i.SendRemoveOrder(issueOrderMessage)
+				//
+				//log.Printf(
+				//	"consumer %s: -> %s: %v",
+				//	i.config.Application.Name,
+				//	i.config.Kafka.IssueOrderTopics.RemoveOrder,
+				//	issueOrderMessage,
+				//)
+				continue
+			}
+			if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.Confirmed {
+				log.Printf("order is already issued: %v", err)
+				continue
+			}
 		}
 
 		readyOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
@@ -84,8 +88,13 @@ func (i *IssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 		)
 
 		if readyOrderHistoryRecordRetrieved.Error != nil {
-			log.Printf("order can not be issued: %v", err)
+			log.Printf("order can not be issued: %v", readyOrderHistoryRecordRetrieved.Error)
 			i.RetryIssueOrder(issueOrderMessage)
+			continue
+		}
+
+		if readyOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation != models.Confirmed {
+			log.Printf("order is not ready for issue")
 			continue
 		}
 
@@ -107,7 +116,8 @@ func (i *IssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, cl
 		}
 		i.SendRemoveOrder(issueOrderMessage)
 
-		log.Printf("consumer %s: -> %s: %v",
+		log.Printf(
+			"consumer %s: -> %s: %v",
 			i.config.Application.Name,
 			i.config.Kafka.IssueOrderTopics.RemoveOrder,
 			issueOrderMessage,
@@ -137,7 +147,7 @@ func (i *IssueOrderHandler) RetryIssueOrder(message kafka.IssueOrderMessage) {
 		return
 	}
 
-	log.Printf("consumer %s: %v -> %v", i.config.Application.Name, part, offs)
+	log.Printf("consumer %s: sent %v -> %v", i.config.Application.Name, part, offs)
 	return
 }
 
@@ -155,6 +165,6 @@ func (i *IssueOrderHandler) SendRemoveOrder(message kafka.IssueOrderMessage) {
 		return
 	}
 
-	log.Printf("consumer %s: %v -> %v", i.config.Application.Name, part, offs)
+	log.Printf("consumer %s: sent %v -> %v", i.config.Application.Name, part, offs)
 	return
 }

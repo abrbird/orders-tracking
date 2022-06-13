@@ -21,7 +21,7 @@ func (S SQLOrderHistoryRepository) CreateOrUpdate(ctx context.Context, record *m
 			$1, $2, $3
 	  	) 
 	  	ON CONFLICT ON CONSTRAINT order_history_records_order_id_status_key
-		DO UPDATE SET (confirmation) = ($3)
+		DO UPDATE SET confirmation = $3
 		WHERE order_history_records.order_id = $1 AND order_history_records.status=$2
 		RETURNING id, order_id, status, confirmation
 	`
@@ -39,7 +39,7 @@ func (S SQLOrderHistoryRepository) CreateOrUpdate(ctx context.Context, record *m
 		&orderHistoryRecord.Status,
 		&orderHistoryRecord.Confirmation,
 	); err != nil {
-		return models.UnknownError
+		return models.UnknownError(err)
 	}
 	return nil
 }
@@ -83,15 +83,14 @@ func (S SQLOrderHistoryRepository) RetrieveByStatus(ctx context.Context, orderId
 	if err := S.store.dbConnectionPool.QueryRow(
 		ctx,
 		query,
-		orderId,
-		status,
+		values...,
 	).Scan(
 		&orderHistoryRecord.Id,
 		&orderHistoryRecord.OrderId,
 		&orderHistoryRecord.Status,
 		&orderHistoryRecord.Confirmation,
 	); err != nil {
-		return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: nil, Error: models.NotFoundError}
+		return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: nil, Error: models.NotFoundError(err)}
 	}
 	return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: orderHistoryRecord, Error: nil}
 }
@@ -135,7 +134,7 @@ func (S SQLOrderHistoryRepository) RetrieveLast(ctx context.Context, orderId int
 		&orderHistoryRecord.Status,
 		&orderHistoryRecord.Confirmation,
 	); err != nil {
-		return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: nil, Error: models.NotFoundError}
+		return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: nil, Error: models.NotFoundError(err)}
 	}
 	return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: orderHistoryRecord, Error: nil}
 }

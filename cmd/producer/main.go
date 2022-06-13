@@ -32,7 +32,7 @@ func main() {
 			Order: kafka.Order{
 				Id: 1,
 			},
-			Address: &kafka.Address{
+			Address: kafka.Address{
 				Id: 1,
 			},
 		}
@@ -43,8 +43,9 @@ func main() {
 			continue
 		}
 
-		log.Printf("producer %s: %v -> %v; err: %v", incomeServiceName, part, offs, kerr)
-		time.Sleep(time.Second * 3)
+		log.Printf("producer %s: sent %v -> %v; err: %v", incomeServiceName, part, offs, kerr)
+		//break
+		time.Sleep(time.Millisecond)
 
 		//if rand.Intn(10) == 9 {
 		//	par, off, err = syncProducer.SendMessage(&sarama.ProducerMessage{
