@@ -7,6 +7,8 @@ services:
     image: postgres:13.3
     restart: always
     user: root
+    networks:
+      - kafka-net
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -20,6 +22,8 @@ services:
     container_name: orders_tracking_db_migrations
     build: ./
     command: /bin/sh -c "/usr/local/bin/goose postgres up -dir ./migrations"
+    networks:
+      - kafka-net
     depends_on:
       - orders_tracking_db
 
@@ -27,9 +31,22 @@ services:
     container_name: orders_tracking
     build: ./
     command: /bin/sh -c "/usr/local/bin/orders_tracking"
+    networks:
+      - kafka-net
     depends_on:
+      - redis
       - orders_tracking_db
       - orders_tracking_db_migrations
+
+  redis:
+    image: 'bitnami/redis:latest'
+    restart: always
+    ports:
+      - '6379:6379'
+    environment:
+      - REDIS_PASSWORD=redis_pass
+    networks:
+      - kafka-net
 
 networks:
   kafka-net:

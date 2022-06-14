@@ -45,8 +45,30 @@ func (S SQLOrderHistoryRepository) CreateOrUpdate(ctx context.Context, record *m
 }
 
 func (S SQLOrderHistoryRepository) Retrieve(ctx context.Context, recordId int64) models.OrderHistoryRecordRetrieve {
-	//TODO implement me
-	panic("implement me")
+	const query = `
+		SELECT 
+    		id,
+			order_id,
+			status,
+			confirmation
+		FROM order_history_records
+		WHERE id = $1
+	`
+
+	orderHistoryRecord := &models.OrderHistoryRecord{}
+	if err := S.store.dbConnectionPool.QueryRow(
+		ctx,
+		query,
+		recordId,
+	).Scan(
+		&orderHistoryRecord.Id,
+		&orderHistoryRecord.OrderId,
+		&orderHistoryRecord.Status,
+		&orderHistoryRecord.Confirmation,
+	); err != nil {
+		return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: nil, Error: models.NotFoundError(err)}
+	}
+	return models.OrderHistoryRecordRetrieve{OrderHistoryRecord: orderHistoryRecord, Error: nil}
 }
 
 func (S SQLOrderHistoryRepository) RetrieveByStatus(ctx context.Context, orderId int64, status string) models.OrderHistoryRecordRetrieve {

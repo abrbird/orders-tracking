@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/Shopify/sarama"
 	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
@@ -30,6 +31,7 @@ func (u *UndoIssueOrderHandler) Cleanup(sarama.ConsumerGroupSession) error {
 
 func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
+		ctx := context.Background()
 
 		if msg.Topic != u.config.Kafka.IssueOrderTopics.UndoIssueOrder {
 			log.Printf(
@@ -53,34 +55,25 @@ func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession
 			issueOrderMessage,
 		)
 
-		ctx := context.Background()
-		issuedOrderHistoryRecordRetrieved := u.service.OrderHistory().RetrieveByStatus(
-			ctx,
-			u.repository.OrderHistory(),
-			issueOrderMessage.Order.Id,
-			models.Issued,
-		)
-
-		if issuedOrderHistoryRecordRetrieved.Error != nil {
-			log.Printf("error on message processing: %v", err)
-			u.RetryUndoIssueOrder(issueOrderMessage)
+		err = u.service.OrderHistory().UndoIssueOrder(ctx, u.repository.OrderHistory(), issueOrderMessage.Order.Id)
+		if err != nil {
+			if errors.Is(err, models.RetryError) {
+				err = u.RetryUndoIssueOrder(issueOrderMessage)
+				if err != nil {
+					log.Println(err)
+				} else {
+					log.Printf("consumer %s: -> %s: %v",
+						u.config.Application.Name,
+						u.config.Kafka.IssueOrderTopics.UndoIssueOrder,
+						issueOrderMessage,
+					)
+				}
+			} else {
+				log.Println(err)
+			}
 			continue
 		}
 
-		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.InProgress {
-			issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation = models.Declined
-
-			err = u.service.OrderHistory().Update(
-				ctx,
-				u.repository.OrderHistory(),
-				issuedOrderHistoryRecordRetrieved.OrderHistoryRecord,
-			)
-			if err != nil {
-				log.Printf("order can not be issued: %v", err)
-				u.RetryUndoIssueOrder(issueOrderMessage)
-				continue
-			}
-		}
 		log.Printf("consumer %s: <- %s: done",
 			u.config.Application.Name,
 			u.config.Kafka.IssueOrderTopics.UndoIssueOrder,
@@ -89,26 +82,26 @@ func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession
 	return nil
 }
 
-func (u *UndoIssueOrderHandler) RetryUndoIssueOrder(message kafka.IssueOrderMessage) {
+func (u *UndoIssueOrderHandler) RetryUndoIssueOrder(message kafka.IssueOrderMessage) error {
 	message.Base.SenderServiceName = u.config.Application.Name
 	message.Base.Attempt += 1
+	maxAttempts := int64(5)
 
-	if message.Base.Attempt > 5 {
-		log.Printf("reached max attempts: %v", message)
-		return
+	if message.Base.Attempt > maxAttempts {
+		return models.MaxAttemptsError(nil, maxAttempts)
 	}
 
 	part, offs, kerr, err := kafka.SendMessage(u.producer, u.config.Kafka.IssueOrderTopics.UndoIssueOrder, message)
 	if err != nil {
-		log.Printf("can not send message: %v", err)
-		return
+		return models.BrokerSendError(err)
 	}
 
 	if kerr != nil {
-		log.Printf("can not send message: %v", kerr)
-		return
+		return models.BrokerSendError(err)
 	}
 
-	log.Printf("consumer %s: sent %v -> %v", u.config.Application.Name, part, offs)
-	return
+	_ = part
+	_ = offs
+
+	return nil
 }

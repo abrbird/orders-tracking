@@ -7,8 +7,10 @@ import (
 
 type Config struct {
 	Application Application
+	Cache       Cache
 	Database    Database
 	Kafka       Kafka
+	Tracing     Tracing
 }
 
 func ParseFile(fileBytes []byte) (*File, error) {
@@ -35,8 +37,10 @@ func ParseConfig(filepath string) (*Config, error) {
 
 	cfg := Config{
 		Application: configFile.Application,
+		Cache:       configFile.Cache,
 		Database:    configFile.Database,
 		Kafka:       configFile.Kafka,
+		Tracing:     configFile.Tracing,
 	}
 
 	return &cfg, nil

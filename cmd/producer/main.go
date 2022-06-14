@@ -44,8 +44,8 @@ func main() {
 		}
 
 		log.Printf("producer %s: sent %v -> %v; err: %v", incomeServiceName, part, offs, kerr)
-		//break
-		time.Sleep(time.Millisecond)
+		break
+		//time.Sleep(time.Millisecond)
 
 		//if rand.Intn(10) == 9 {
 		//	par, off, err = syncProducer.SendMessage(&sarama.ProducerMessage{

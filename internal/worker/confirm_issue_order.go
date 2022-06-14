@@ -3,6 +3,7 @@ package worker
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/Shopify/sarama"
 	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
@@ -29,6 +30,7 @@ func (i *ConfirmIssueOrderHandler) Cleanup(sarama.ConsumerGroupSession) error {
 
 func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for msg := range claim.Messages() {
+		ctx := context.Background()
 
 		if msg.Topic != i.config.Kafka.IssueOrderTopics.ConfirmIssueOrder {
 			log.Printf(
@@ -52,40 +54,22 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 			issueOrderMessage,
 		)
 
-		ctx := context.Background()
-		issuedOrderHistoryRecordRetrieved := i.service.OrderHistory().RetrieveByStatus(
-			ctx,
-			i.repository.OrderHistory(),
-			issueOrderMessage.Order.Id,
-			models.Issued,
-		)
-
-		if issuedOrderHistoryRecordRetrieved.Error != nil {
-			log.Printf("error on message processing: %v", err)
-			i.RetryConfirmIssueOrder(issueOrderMessage)
-			continue
-		}
-
-		if issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Confirmation == models.Confirmed {
-			log.Printf("order is already issued: %v", err)
-			continue
-		}
-
-		confirmIssueRecord := models.OrderHistoryRecord{
-			Id:           issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Id,
-			OrderId:      issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.OrderId,
-			Status:       issuedOrderHistoryRecordRetrieved.OrderHistoryRecord.Status,
-			Confirmation: models.Confirmed,
-		}
-
-		err = i.service.OrderHistory().Update(
-			ctx,
-			i.repository.OrderHistory(),
-			&confirmIssueRecord,
-		)
+		err = i.service.OrderHistory().ConfirmIssueOrder(ctx, i.repository.OrderHistory(), issueOrderMessage.Order.Id)
 		if err != nil {
-			log.Printf("order can not be issued: %v", err)
-			i.RetryConfirmIssueOrder(issueOrderMessage)
+			if errors.Is(err, models.RetryError) {
+				err = i.RetryConfirmIssueOrder(issueOrderMessage)
+				if err != nil {
+					log.Println(err)
+				} else {
+					log.Printf("consumer %s: -> %s: %v",
+						i.config.Application.Name,
+						i.config.Kafka.IssueOrderTopics.ConfirmIssueOrder,
+						issueOrderMessage,
+					)
+				}
+			} else {
+				log.Println(err)
+			}
 			continue
 		}
 
@@ -97,21 +81,21 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 	return nil
 }
 
-func (i *ConfirmIssueOrderHandler) RetryConfirmIssueOrder(message kafka.IssueOrderMessage) {
+func (i *ConfirmIssueOrderHandler) RetryConfirmIssueOrder(message kafka.IssueOrderMessage) error {
 	message.Base.SenderServiceName = i.config.Application.Name
 	message.Base.Attempt += 1
 
-	part, offs, kerr, err := kafka.SendMessage(i.producer, i.config.Kafka.IssueOrderTopics.IssueOrder, message)
+	part, offs, kerr, err := kafka.SendMessage(i.producer, i.config.Kafka.IssueOrderTopics.ConfirmIssueOrder, message)
 	if err != nil {
-		log.Printf("can not send message: %v", err)
-		return
+		return models.BrokerSendError(err)
 	}
 
 	if kerr != nil {
-		log.Printf("can not send message: %v", kerr)
-		return
+		return models.BrokerSendError(err)
 	}
 
-	log.Printf("consumer %s: sent %v -> %v", i.config.Application.Name, part, offs)
-	return
+	_ = part
+	_ = offs
+
+	return nil
 }

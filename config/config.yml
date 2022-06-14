@@ -3,6 +3,18 @@ application:
   name: "orders_tracking"
   testData: true
 
+cache:
+  redis:
+#    host: redis
+    host: 172.17.0.1
+    port: 6379
+    password: redis_pass
+
+tracing:
+  jaeger:
+    host: 172.17.0.1
+    port: 6831
+
 database:
   dbms: "postgres"
   db: "orders_tracking"

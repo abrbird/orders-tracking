@@ -4,6 +4,7 @@ import (
 	"context"
 	"expvar"
 	"fmt"
+	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/cache/redis_cache"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -36,6 +37,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	cache := redis_cache.New(cfg.Cache.Redis)
+
 	//tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
 	//defer closer.Close()
 	//opentracing.SetGlobalTracer(
@@ -43,7 +46,7 @@ func main() {
 	//)
 
 	repository := sql_repository.New(dbConnPool)
-	service := implemented_service.New()
+	service := implemented_service.New(cache)
 
 	fmt.Println("Start orders...")
 	fmt.Println("config", cfg)

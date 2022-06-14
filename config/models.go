@@ -4,13 +4,34 @@ import "fmt"
 
 type File struct {
 	Application Application `yaml:"application"`
+	Cache       Cache       `yaml:"cache"`
 	Database    Database    `yaml:"database"`
 	Kafka       Kafka       `yaml:"kafka"`
+	Tracing     Tracing     `yaml:"tracing"`
 }
 
 type Application struct {
 	Name     string `yaml:"name"`
 	TestData bool   `yaml:"testData"`
+}
+
+type Redis struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Password string `yaml:"password"`
+}
+
+type Cache struct {
+	Redis Redis `yaml:"redis"`
+}
+
+type Jaeger struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
+
+type Tracing struct {
+	Jaeger Jaeger `yaml:"jaeger"`
 }
 
 type Broker struct {
