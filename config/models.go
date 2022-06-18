@@ -53,12 +53,18 @@ type IssueOrderTopics struct {
 }
 
 type Database struct {
-	DBMS     string `yaml:"dbms"`
-	DB       string `yaml:"db"`
-	Host     string `yaml:"host"`
-	Port     uint   `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
+	DBMS     string  `yaml:"dbms"`
+	DB       string  `yaml:"db"`
+	Host     string  `yaml:"host"`
+	Port     uint    `yaml:"port"`
+	User     string  `yaml:"user"`
+	Password string  `yaml:"password"`
+	Shards   []Shard `yaml:"shards"`
+}
+
+type Shard struct {
+	Host string `yaml:"host"`
+	Port uint   `yaml:"port"`
 }
 
 type BrokersArray []Broker

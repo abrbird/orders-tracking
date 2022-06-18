@@ -18,6 +18,38 @@ services:
     ports:
       - "5432:5432"
 
+  orders_tracking_db_shard_1:
+    container_name: orders_tracking_db_shard_1
+    hostname: orders_tracking_db_shard_1
+    image: postgres:13.3
+    restart: always
+    networks:
+      - kafka-net
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=orders_tracking
+    volumes:
+      - ./postgres-data-1:/var/lib/postgresql
+    ports:
+      - "5441:5432"
+
+  orders_tracking_db_shard_2:
+    container_name: orders_tracking_db_shard_2
+    hostname: orders_tracking_db_shard_2
+    image: postgres:13.3
+    restart: always
+    networks:
+      - kafka-net
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=orders_tracking
+    volumes:
+      - ./postgres-data-2:/var/lib/postgresql
+    ports:
+      - "5442:5432"
+
   orders_tracking_db_migrations:
     container_name: orders_tracking_db_migrations
     build: ./
@@ -37,6 +69,41 @@ services:
       - redis
       - orders_tracking_db
       - orders_tracking_db_migrations
+
+  orders_tracking_db_migrations_1:
+    image: gomicro/docker-goose:latest
+    container_name: orders_tracking_db_migrations_1
+    build: shards/
+    environment:
+      - DBHOST=orders_tracking_db_shard_1
+      - DBUSER=postgres
+      - DBPASSWORD=postgres
+      - DBNAME=orders
+      - DBSSL=disable
+    volumes:
+      - /shards:/shards
+      - /shard_migrations:/shard_migrations
+    networks:
+      - default
+      - kafka-net
+    depends_on:
+      - orders_tracking_db_shard_1
+
+  orders_tracking_db_migrations_2:
+    image: gomicro/docker-goose:latest
+    container_name: orders_tracking_db_migrations_2
+    build: shards/
+    environment:
+      - DBHOST=orders_tracking_db_shard_2
+      - DBUSER=postgres
+      - DBPASSWORD=postgres
+      - DBNAME=orders
+      - DBSSL=disable
+    networks:
+      - default
+      - kafka-net
+    depends_on:
+      - orders_tracking_db_shard_2
 
   redis:
     image: 'bitnami/redis:latest'
