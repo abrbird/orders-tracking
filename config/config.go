@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	Application Application
+	Monitoring  Monitoring
 	Cache       Cache
 	Database    Database
 	Kafka       Kafka
@@ -37,6 +38,7 @@ func ParseConfig(filepath string) (*Config, error) {
 
 	cfg := Config{
 		Application: configFile.Application,
+		Monitoring:  configFile.Monitoring,
 		Cache:       configFile.Cache,
 		Database:    configFile.Database,
 		Kafka:       configFile.Kafka,

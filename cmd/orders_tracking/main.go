@@ -4,7 +4,9 @@ import (
 	"context"
 	"expvar"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/cache/redis_cache"
+	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/metrics/prom_metrics"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -47,16 +49,14 @@ func main() {
 
 	repository := sql_repository.New(dbConnPool)
 	service := implemented_service.New(cache)
+	metrics := prom_metrics.New(cfg)
 
-	fmt.Println("Start orders...")
-	fmt.Println("config", cfg)
-	fmt.Println("repository", repository)
-	fmt.Println("service", service)
+	log.Printf("Start %s...", cfg.Application.Name)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	worker, err := wrkr.New(cfg, repository, service)
+	worker, err := wrkr.New(cfg, repository, service, metrics)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,8 +68,25 @@ func main() {
 	go func() {
 		g := &GoroutinesNum{}
 		expvar.Publish("GoroutinesNum", g)
-		fmt.Println("serving pprof")
-		http.ListenAndServe("127.0.0.1:7999", nil)
+
+		err = http.ListenAndServe(
+			fmt.Sprintf("%s:%v", cfg.Monitoring.Pprof.Host, cfg.Monitoring.Pprof.Port),
+			nil,
+		)
+		if err != nil {
+			log.Print(err)
+		}
+	}()
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		err = http.ListenAndServe(
+			fmt.Sprintf("%s:%v", cfg.Monitoring.Metrics.Host, cfg.Monitoring.Metrics.Port),
+			nil,
+		)
+		if err != nil {
+			log.Print(err)
+		}
 	}()
 
 	<-ctx.Done()

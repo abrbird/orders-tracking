@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE EXTENSION IF NOT EXISTS postgres_fdw;
-CREATE TABLE public.logistics_orders_availability_shard_0 (
+CREATE TABLE public.order_history_records_shard_0 (
                                        id serial PRIMARY KEY,
                                        order_id bigint NOT NULL,
                                        status VARCHAR NOT NULL,
@@ -13,5 +13,5 @@ CREATE TABLE public.logistics_orders_availability_shard_0 (
 
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE public.logistics_orders_availability_shard_0;
+DROP TABLE public.order_history_records_shard_0;
 -- +goose StatementEnd

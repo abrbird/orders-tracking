@@ -3,6 +3,15 @@ application:
   name: "orders_tracking"
   testData: true
 
+monitoring:
+  pprof:
+    host: 0.0.0.0
+    port: 8400
+
+  metrics:
+    host: 0.0.0.0
+    port: 8500
+
 cache:
   redis:
 #    host: redis

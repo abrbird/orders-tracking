@@ -7,6 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
+	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/metrics"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/models"
 	"log"
 
@@ -18,6 +19,7 @@ type UndoIssueOrderHandler struct {
 	producer   sarama.SyncProducer
 	repository rpstr.Repository
 	service    srvc.Service
+	metrics    metrics.Metrics
 	config     *cnfg.Config
 }
 
@@ -45,6 +47,7 @@ func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession
 		var issueOrderMessage kafka.IssueOrderMessage
 		err := json.Unmarshal(msg.Value, &issueOrderMessage)
 		if err != nil {
+			u.metrics.Error()
 			log.Print("Unmarshall failed: value=%v, err=%v", string(msg.Value), err)
 			continue
 		}
@@ -60,6 +63,7 @@ func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession
 			if errors.Is(err, models.RetryError) {
 				err = u.RetryUndoIssueOrder(issueOrderMessage)
 				if err != nil {
+					u.metrics.KafkaError()
 					log.Println(err)
 				} else {
 					log.Printf("consumer %s: -> %s: %v",
@@ -69,6 +73,7 @@ func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession
 					)
 				}
 			} else {
+				u.metrics.KafkaError()
 				log.Println(err)
 			}
 			continue

@@ -8,6 +8,7 @@ services:
     restart: always
     user: root
     networks:
+      - default
       - kafka-net
     environment:
       - POSTGRES_USER=postgres
@@ -24,6 +25,7 @@ services:
     image: postgres:13.3
     restart: always
     networks:
+      - default
       - kafka-net
     environment:
       - POSTGRES_USER=postgres
@@ -40,6 +42,7 @@ services:
     image: postgres:13.3
     restart: always
     networks:
+      - default
       - kafka-net
     environment:
       - POSTGRES_USER=postgres
@@ -55,6 +58,7 @@ services:
     build: ./
     command: /bin/sh -c "/usr/local/bin/goose postgres up -dir ./migrations"
     networks:
+      - default
       - kafka-net
     depends_on:
       - orders_tracking_db
@@ -64,7 +68,11 @@ services:
     build: ./
     command: /bin/sh -c "/usr/local/bin/orders_tracking"
     networks:
+      - default
       - kafka-net
+    ports:
+      - "8400:8400"
+      - "8500:8500"
     depends_on:
       - redis
       - orders_tracking_db
@@ -109,5 +117,6 @@ services:
       - kafka-net
 
 networks:
+  default:
   kafka-net:
     driver: bridge

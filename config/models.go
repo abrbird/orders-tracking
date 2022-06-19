@@ -4,6 +4,7 @@ import "fmt"
 
 type File struct {
 	Application Application `yaml:"application"`
+	Monitoring  Monitoring  `yaml:"monitoring"`
 	Cache       Cache       `yaml:"cache"`
 	Database    Database    `yaml:"database"`
 	Kafka       Kafka       `yaml:"kafka"`
@@ -23,6 +24,21 @@ type Redis struct {
 
 type Cache struct {
 	Redis Redis `yaml:"redis"`
+}
+
+type Monitoring struct {
+	Pprof   Pprof   `yaml:"pprof"`
+	Metrics Metrics `yaml:"metrics"`
+}
+
+type Pprof struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+}
+
+type Metrics struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
 }
 
 type Jaeger struct {

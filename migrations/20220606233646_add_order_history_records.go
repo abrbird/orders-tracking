@@ -14,9 +14,9 @@ func init() {
 }
 
 const (
-	TableName        = "logistics_orders_availability"
+	TableName        = "order_history_records"
 	shardServerNameF = "shard_%d"
-	shardTableNameF  = "logistics_orders_availability_shard_%d"
+	shardTableNameF  = "order_history_records_shard_%d"
 )
 
 func upAddOrderHistoryRecords(tx *sql.Tx) error {
