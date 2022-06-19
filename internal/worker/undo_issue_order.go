@@ -60,6 +60,7 @@ func (u *UndoIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSession
 
 		err = u.service.OrderHistory().UndoIssueOrder(ctx, u.repository.OrderHistory(), issueOrderMessage.Order.Id)
 		if err != nil {
+			u.metrics.Error()
 			if errors.Is(err, models.RetryError) {
 				err = u.RetryUndoIssueOrder(issueOrderMessage)
 				if err != nil {

@@ -59,6 +59,7 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 
 		err = i.service.OrderHistory().ConfirmIssueOrder(ctx, i.repository.OrderHistory(), issueOrderMessage.Order.Id)
 		if err != nil {
+			i.metrics.Error()
 			if errors.Is(err, models.RetryError) {
 				err = i.RetryConfirmIssueOrder(issueOrderMessage)
 				if err != nil {
