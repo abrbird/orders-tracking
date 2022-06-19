@@ -71,18 +71,13 @@ services:
       - orders_tracking_db_migrations
 
   orders_tracking_db_migrations_1:
-    image: gomicro/docker-goose:latest
+    build:
+      context: .
+      dockerfile: Dockerfile-shards
+      args:
+        MIG_DIR: shard_migrations_0
     container_name: orders_tracking_db_migrations_1
-    build: shards/
-    environment:
-      - DBHOST=orders_tracking_db_shard_1
-      - DBUSER=postgres
-      - DBPASSWORD=postgres
-      - DBNAME=orders
-      - DBSSL=disable
-    volumes:
-      - /shards:/shards
-      - /shard_migrations:/shard_migrations
+    command: /bin/sh -c "sleep 3 && goose postgres \"host=orders_tracking_db_shard_1 port=5432 user=postgres password=postgres dbname=orders_tracking sslmode=disable\" up"
     networks:
       - default
       - kafka-net
@@ -90,15 +85,13 @@ services:
       - orders_tracking_db_shard_1
 
   orders_tracking_db_migrations_2:
-    image: gomicro/docker-goose:latest
+    build:
+      context: .
+      dockerfile: Dockerfile-shards
+      args:
+        MIG_DIR: shard_migrations_1
     container_name: orders_tracking_db_migrations_2
-    build: shards/
-    environment:
-      - DBHOST=orders_tracking_db_shard_2
-      - DBUSER=postgres
-      - DBPASSWORD=postgres
-      - DBNAME=orders
-      - DBSSL=disable
+    command: /bin/sh -c "sleep 3 && goose postgres \"host=orders_tracking_db_shard_2 port=5432 user=postgres password=postgres dbname=orders_tracking sslmode=disable\" up"
     networks:
       - default
       - kafka-net

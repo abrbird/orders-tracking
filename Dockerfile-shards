@@ -1,0 +1,4 @@
+FROM gomicro/goose:latest
+
+ARG MIG_DIR
+ADD ${MIG_DIR}/*.sql /migrations/
