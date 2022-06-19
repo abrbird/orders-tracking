@@ -56,7 +56,7 @@ services:
   orders_tracking_db_migrations:
     container_name: orders_tracking_db_migrations
     build: ./
-    command: /bin/sh -c "/usr/local/bin/goose postgres up -dir ./migrations"
+    command: /bin/sh -c "sleep 3 &&/usr/local/bin/goose postgres up -dir ./migrations"
     networks:
       - default
       - kafka-net
