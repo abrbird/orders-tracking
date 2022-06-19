@@ -127,7 +127,8 @@ func (o OrderHistoryService) IssueOrder(ctx context.Context, repository rpstr.Or
 		&issuedOrderRecord,
 	)
 	if err != nil {
-		retryError := models.NewRetryError(err)
+		//retryError := models.NewRetryError(err)
+		retryError := models.NewRetryError(nil)
 		readyOrderHistoryRecordRetrieved.Error = retryError
 		return readyOrderHistoryRecordRetrieved
 	}
@@ -146,7 +147,8 @@ func (o OrderHistoryService) UndoIssueOrder(ctx context.Context, repository rpst
 	)
 
 	if issuedOrderHistoryRecordRetrieved.Error != nil {
-		retryError := models.NewRetryError(issuedOrderHistoryRecordRetrieved.Error)
+		//retryError := models.NewRetryError(issuedOrderHistoryRecordRetrieved.Error)
+		retryError := models.NewRetryError(nil)
 		return retryError
 	}
 
@@ -159,7 +161,8 @@ func (o OrderHistoryService) UndoIssueOrder(ctx context.Context, repository rpst
 			issuedOrderHistoryRecordRetrieved.OrderHistoryRecord,
 		)
 		if err != nil {
-			retryError := models.NewRetryError(err)
+			//retryError := models.NewRetryError(err)
+			retryError := models.NewRetryError(nil)
 			return retryError
 		}
 	}
