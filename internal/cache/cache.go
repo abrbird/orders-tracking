@@ -2,7 +2,7 @@ package cache
 
 import (
 	"context"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/models"
+	"github.com/abrbird/orders-tracking/internal/models"
 )
 
 type Cache interface {

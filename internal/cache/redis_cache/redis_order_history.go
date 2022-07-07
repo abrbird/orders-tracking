@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/models"
+	"github.com/abrbird/orders-tracking/internal/models"
 	"time"
 )
 
@@ -46,7 +46,7 @@ func (r RedisOrderHistoryCache) Set(ctx context.Context, record models.OrderHist
 	//	span, ctx := opentracing.StartSpanFromContext(ctx, "cache")
 	//	defer span.Finish()
 	//
-	
+
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err

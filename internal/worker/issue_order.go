@@ -3,16 +3,16 @@ package worker
 import (
 	"context"
 	"encoding/json"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/metrics"
+	"github.com/abrbird/orders-tracking/internal/metrics"
 	"log"
 
 	"github.com/Shopify/sarama"
+	cnfg "github.com/abrbird/orders-tracking/config"
+	"github.com/abrbird/orders-tracking/internal/broker/kafka"
+	"github.com/abrbird/orders-tracking/internal/models"
+	rpstr "github.com/abrbird/orders-tracking/internal/repository"
+	srvc "github.com/abrbird/orders-tracking/internal/service"
 	"github.com/pkg/errors"
-	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/models"
-	rpstr "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/repository"
-	srvc "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/service"
 )
 
 type IssueOrderHandler struct {

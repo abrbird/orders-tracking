@@ -1,4 +1,4 @@
-module gitlab.ozon.dev/zBlur/homework-3/orders-tracking
+module github.com/abrbird/orders-tracking
 
 go 1.18
 

@@ -6,9 +6,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/abrbird/orders-tracking/config"
+	_ "github.com/abrbird/orders-tracking/migrations"
 	_ "github.com/lib/pq"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
-	_ "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/migrations"
 )
 
 var (

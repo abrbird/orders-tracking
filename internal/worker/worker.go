@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"github.com/Shopify/sarama"
-	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/metrics"
-	rpstr "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/repository"
-	srvc "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/service"
+	cnfg "github.com/abrbird/orders-tracking/config"
+	"github.com/abrbird/orders-tracking/internal/broker/kafka"
+	"github.com/abrbird/orders-tracking/internal/metrics"
+	rpstr "github.com/abrbird/orders-tracking/internal/repository"
+	srvc "github.com/abrbird/orders-tracking/internal/service"
 	"log"
 )
 

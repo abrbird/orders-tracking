@@ -3,9 +3,9 @@ package implemented_service
 import (
 	"context"
 	"errors"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/cache/redis_cache"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/models"
-	rpstr "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/repository"
+	"github.com/abrbird/orders-tracking/internal/cache/redis_cache"
+	"github.com/abrbird/orders-tracking/internal/models"
+	rpstr "github.com/abrbird/orders-tracking/internal/repository"
 )
 
 type OrderHistoryService struct {

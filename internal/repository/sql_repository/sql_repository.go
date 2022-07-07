@@ -1,8 +1,8 @@
 package sql_repository
 
 import (
+	"github.com/abrbird/orders-tracking/internal/repository"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/repository"
 )
 
 type SQLRepository struct {
