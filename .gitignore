@@ -1,0 +1,7 @@
+.idea
+pgadmin
+postgres-data
+
+./goose
+./orders_tracking
+./producer

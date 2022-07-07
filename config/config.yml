@@ -1,0 +1,42 @@
+
+application:
+  name: "orders_tracking"
+  testData: true
+
+cache:
+  redis:
+#    host: redis
+    host: 172.17.0.1
+    port: 6379
+    password: redis_pass
+
+tracing:
+  jaeger:
+    host: 172.17.0.1
+    port: 6831
+
+database:
+  dbms: "postgres"
+  db: "orders_tracking"
+#  host: orders_tracking_db
+#  host: localhost
+  host: 172.17.0.1
+  port: 5432
+  user: "postgres"
+  password: "postgres"
+
+kafka:
+  brokers:
+    - host: "172.17.0.1"
+      port: 19092
+    - host: "172.17.0.1"
+      port: 29092
+    - host: "172.17.0.1"
+      port: 39092
+
+  issueOrderTopics:
+    issueOrder: "IssueOrder"
+    removeOrder: "RemoveOrder"
+    markOrderIssued: "MarkOrderIssued"
+    undoIssueOrder: "UndoIssueOrder"
+    confirmIssueOrder: "ConfirmIssueOrder"
