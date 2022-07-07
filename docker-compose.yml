@@ -8,6 +8,7 @@ services:
     restart: always
     user: root
     networks:
+      - default
       - kafka-net
     environment:
       - POSTGRES_USER=postgres
@@ -18,11 +19,46 @@ services:
     ports:
       - "5432:5432"
 
+  orders_tracking_db_shard_1:
+    container_name: orders_tracking_db_shard_1
+    hostname: orders_tracking_db_shard_1
+    image: postgres:13.3
+    restart: always
+    networks:
+      - default
+      - kafka-net
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=orders_tracking
+    volumes:
+      - ./postgres-data-1:/var/lib/postgresql
+    ports:
+      - "5441:5432"
+
+  orders_tracking_db_shard_2:
+    container_name: orders_tracking_db_shard_2
+    hostname: orders_tracking_db_shard_2
+    image: postgres:13.3
+    restart: always
+    networks:
+      - default
+      - kafka-net
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=orders_tracking
+    volumes:
+      - ./postgres-data-2:/var/lib/postgresql
+    ports:
+      - "5442:5432"
+
   orders_tracking_db_migrations:
     container_name: orders_tracking_db_migrations
     build: ./
-    command: /bin/sh -c "/usr/local/bin/goose postgres up -dir ./migrations"
+    command: /bin/sh -c "sleep 3 &&/usr/local/bin/goose postgres up -dir ./migrations"
     networks:
+      - default
       - kafka-net
     depends_on:
       - orders_tracking_db
@@ -32,11 +68,43 @@ services:
     build: ./
     command: /bin/sh -c "/usr/local/bin/orders_tracking"
     networks:
+      - default
       - kafka-net
+    ports:
+      - "8400:8400"
+      - "8500:8500"
     depends_on:
       - redis
       - orders_tracking_db
       - orders_tracking_db_migrations
+
+  orders_tracking_db_migrations_1:
+    build:
+      context: .
+      dockerfile: Dockerfile-shards
+      args:
+        MIG_DIR: shard_migrations_0
+    container_name: orders_tracking_db_migrations_1
+    command: /bin/sh -c "sleep 3 && goose postgres \"host=orders_tracking_db_shard_1 port=5432 user=postgres password=postgres dbname=orders_tracking sslmode=disable\" up"
+    networks:
+      - default
+      - kafka-net
+    depends_on:
+      - orders_tracking_db_shard_1
+
+  orders_tracking_db_migrations_2:
+    build:
+      context: .
+      dockerfile: Dockerfile-shards
+      args:
+        MIG_DIR: shard_migrations_1
+    container_name: orders_tracking_db_migrations_2
+    command: /bin/sh -c "sleep 3 && goose postgres \"host=orders_tracking_db_shard_2 port=5432 user=postgres password=postgres dbname=orders_tracking sslmode=disable\" up"
+    networks:
+      - default
+      - kafka-net
+    depends_on:
+      - orders_tracking_db_shard_2
 
   redis:
     image: 'bitnami/redis:latest'
@@ -49,5 +117,6 @@ services:
       - kafka-net
 
 networks:
+  default:
   kafka-net:
     driver: bridge

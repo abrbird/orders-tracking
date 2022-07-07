@@ -6,6 +6,7 @@ import (
 	"github.com/Shopify/sarama"
 	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
+	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/metrics"
 	rpstr "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/repository"
 	srvc "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/service"
 	"log"
@@ -13,13 +14,16 @@ import (
 
 type OrdersTrackingWorker struct {
 	config                   *cnfg.Config
+	repository               rpstr.Repository
+	service                  srvc.Service
+	metrics                  metrics.Metrics
 	producer                 sarama.SyncProducer
 	issueOrderConsumer       *IssueOrderHandler
 	undoIssueOrderConsumer   *UndoIssueOrderHandler
 	confirmIssueOrderHandler *ConfirmIssueOrderHandler
 }
 
-func New(cfg *cnfg.Config, repository rpstr.Repository, service srvc.Service) (*OrdersTrackingWorker, error) {
+func New(cfg *cnfg.Config, repository rpstr.Repository, service srvc.Service, metrics metrics.Metrics) (*OrdersTrackingWorker, error) {
 
 	brokerConfig := kafka.NewConfig()
 	producer, err := kafka.NewSyncProducer(cfg.Kafka.Brokers.String(), brokerConfig)
@@ -28,24 +32,30 @@ func New(cfg *cnfg.Config, repository rpstr.Repository, service srvc.Service) (*
 	}
 
 	worker := &OrdersTrackingWorker{
-		config:   cfg,
-		producer: producer,
+		config:     cfg,
+		repository: repository,
+		service:    service,
+		metrics:    metrics,
+		producer:   producer,
 		issueOrderConsumer: &IssueOrderHandler{
 			producer:   producer,
 			repository: repository,
 			service:    service,
+			metrics:    metrics,
 			config:     cfg,
 		},
 		undoIssueOrderConsumer: &UndoIssueOrderHandler{
 			producer:   producer,
 			repository: repository,
 			service:    service,
+			metrics:    metrics,
 			config:     cfg,
 		},
 		confirmIssueOrderHandler: &ConfirmIssueOrderHandler{
 			producer:   producer,
 			repository: repository,
 			service:    service,
+			metrics:    metrics,
 			config:     cfg,
 		},
 	}

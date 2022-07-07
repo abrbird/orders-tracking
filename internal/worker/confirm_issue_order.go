@@ -7,6 +7,7 @@ import (
 	"github.com/Shopify/sarama"
 	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
+	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/metrics"
 	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/models"
 	rpstr "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/repository"
 	srvc "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/service"
@@ -17,6 +18,7 @@ type ConfirmIssueOrderHandler struct {
 	producer   sarama.SyncProducer
 	repository rpstr.Repository
 	service    srvc.Service
+	metrics    metrics.Metrics
 	config     *cnfg.Config
 }
 
@@ -44,6 +46,7 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 		var issueOrderMessage kafka.IssueOrderMessage
 		err := json.Unmarshal(msg.Value, &issueOrderMessage)
 		if err != nil {
+			i.metrics.Error()
 			log.Print("Unmarshall failed: value=%v, err=%v", string(msg.Value), err)
 			continue
 		}
@@ -56,9 +59,11 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 
 		err = i.service.OrderHistory().ConfirmIssueOrder(ctx, i.repository.OrderHistory(), issueOrderMessage.Order.Id)
 		if err != nil {
+			i.metrics.Error()
 			if errors.Is(err, models.RetryError) {
 				err = i.RetryConfirmIssueOrder(issueOrderMessage)
 				if err != nil {
+					i.metrics.KafkaError()
 					log.Println(err)
 				} else {
 					log.Printf("consumer %s: -> %s: %v",
@@ -68,6 +73,7 @@ func (i *ConfirmIssueOrderHandler) ConsumeClaim(session sarama.ConsumerGroupSess
 					)
 				}
 			} else {
+				i.metrics.KafkaError()
 				log.Println(err)
 			}
 			continue
