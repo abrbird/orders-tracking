@@ -1,9 +1,9 @@
 package prom_metrics
 
 import (
+	cnfg "github.com/abrbird/orders-tracking/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	cnfg "gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
 )
 
 type Metrics struct {

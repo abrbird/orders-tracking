@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/pressly/goose/v3"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
 	"log"
 	"strings"
 )

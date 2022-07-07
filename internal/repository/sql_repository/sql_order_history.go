@@ -3,8 +3,7 @@ package sql_repository
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/models"
+	"github.com/abrbird/orders-tracking/internal/models"
 	"strings"
 )
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/config"
-	"gitlab.ozon.dev/zBlur/homework-3/orders-tracking/internal/broker/kafka"
+	"github.com/abrbird/orders-tracking/config"
+	"github.com/abrbird/orders-tracking/internal/broker/kafka"
 	"log"
 	"time"
 )
